@@ -15,6 +15,18 @@ import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Image from "next/image";
+import { ToastContainer, toast } from "react-toastify";
+import { storage } from "@/Api/services/firebase";
+import {
+  getDownloadURL,
+  ref,
+  uploadBytes,
+  uploadBytesResumable,
+} from "firebase/storage";
+import { useDispatch, useSelector } from "react-redux";
+import { setImageUrl } from "../GlobalRedux/Feature/imageSlice";
+import CircularProgress from "@mui/material/CircularProgress";
+import { link } from "fs";
 
 // Styled Button with Glass Effect
 const GlassButton = styled(Button)(({ theme }) => ({
@@ -48,12 +60,81 @@ const modalstyle = {
 function Camera() {
   const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
   const webcamRef = useRef<Webcam>(null);
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState("");
-
+  const dispatch = useDispatch();
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
+  // Function to capture photo
+  const capturePhoto = async () => {
+    const video = webcamRef.current?.video;
+    if (!video) return toast.error("No Image found");
+
+    // Create a canvas element to draw the image onto
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+
+    // Draw the current frame from the video onto the canvas
+    ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Convert the canvas content to a data URL representing the image
+    const imageDataUrl = canvas.toDataURL("image/jpeg");
+
+    // Convert the data URL to a Blob object
+    const blob = await fetch(imageDataUrl).then((res) => res.blob());
+
+    // Create a file from the Blob object
+    const timestamp = Date.now();
+    const imageFileName = `captured-image-${timestamp}.jpg`;
+    const imageFile = new File([blob], imageFileName, { type: "image/jpeg" });
+
+    // Upload the image file to Firebase Storage
+    const storageRef = ref(storage, "non-resized-image/");
+    const imageRef = ref(storage, `non-resized-image/${imageFile.name}`);
+    const uploadTask = uploadBytesResumable(imageRef, imageFile);
+
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        // Handle upload progress
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      },
+      (error) => {
+        // Handle upload error
+        setLoading(false);
+        console.error("Upload failed:", error);
+        alert("An error occurred in uploading");
+      },
+      () => {
+        // Upload completed successfully, get the download URL
+        getDownloadURL(imageRef)
+          .then(async (downloadUrl) => {
+            // Do something with the download URL
+            await dispatch(setImageUrl(downloadUrl));
+            setLoading(false);
+            alert("Image uploaded successfully");
+          })
+          .catch((error) => {
+            // Handle getting download URL error
+            setLoading(false);
+            console.error("Error getting download URL:", error);
+            toast.error("An error occurred while getting download URL");
+          });
+      }
+    );
+
+    // Wait for the upload to complete
+    await uploadTask;
+
+    // Get the URL of the uploaded image
+    const downloadUrl = await getDownloadURL(imageRef);
+  };
 
   let title: string = "Camera";
 
@@ -117,13 +198,14 @@ function Camera() {
         <Link href="/camera">
           <GlassButton
             variant="contained"
+            onClick={capturePhoto}
             sx={{
               position: "absolute",
               bottom: "10px",
               left: "10px",
             }}
           >
-            Capture
+            {loading ? <CircularProgress /> : "Capture"}{" "}
           </GlassButton>
         </Link>
         <GlassButton

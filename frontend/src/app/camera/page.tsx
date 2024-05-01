@@ -6,6 +6,13 @@ import { Button } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import Link from "next/link";
 import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import Modal from "@mui/material/Modal";
+import Box from "@mui/material/Box";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import Select, { SelectChangeEvent } from "@mui/material/Select";
 
 // Styled Button with Glass Effect
 const GlassButton = styled(Button)(({ theme }) => ({
@@ -20,10 +27,31 @@ const GlassButton = styled(Button)(({ theme }) => ({
     },
   },
 }));
+
+const modalstyle = {
+  position: "absolute" as "absolute",
+  top: "40%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "background.paper",
+  border: "none",
+  boxShadow: 24,
+  p: 4,
+  color: "black",
+  borderRadius: "20px",
+};
+
 function Camera() {
   const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const webcamRef = useRef<Webcam>(null);
+  const [open, setOpen] = useState(false);
+  const [session, setSession] = useState("");
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+
   let title: string = "Camera";
 
   useEffect(() => {
@@ -43,6 +71,10 @@ function Camera() {
   // Function to handle camera change
   const handleCameraChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCamera(event.target.value);
+  };
+
+  const handleSelectChange = (event: SelectChangeEvent) => {
+    setSession(event.target.value as string);
   };
 
   return (
@@ -91,18 +123,48 @@ function Camera() {
             Capture
           </GlassButton>
         </Link>
-          <GlassButton
-            variant="contained"
-            sx={{
-              position: "absolute",
-              bottom: "10px",
-              right: "10px",
-              width: "fullWidth",
-            }}
-          >
-            View Tutorial
-          </GlassButton>
+        <GlassButton
+          variant="contained"
+          sx={{
+            position: "absolute",
+            bottom: "10px",
+            right: "10px",
+            width: "fullWidth",
+          }}
+          onClick={handleOpen}
+        >
+          View Tutorial
+        </GlassButton>
       </Stack>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={modalstyle}>
+          <Box sx={{ minWidth: 120 }}>
+            <FormControl fullWidth>
+              <InputLabel id="demo-simple-select-label">
+                Choose Tutorial
+              </InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                value={session}
+                label="Choose Tutorial"
+                onChange={handleSelectChange}
+              >
+                <MenuItem value={"legcutter"}>Legcutter-Grip</MenuItem>
+                <MenuItem value={"offcutter"}>Offcutter-Grip</MenuItem>
+                <MenuItem value={"fastballing-action-sideon"}>
+                  Fastballing-Action-Sideon
+                </MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+        </Box>
+      </Modal>
     </div>
   );
 }

@@ -186,6 +186,7 @@ function Camera() {
                     alt="Legcutter Grip"
                     width={400}
                     height={200}
+                    layout="responsive"
                     style={{
                       margin: "10px",
                     }}
@@ -210,6 +211,7 @@ function Camera() {
                     alt="Offcutter Grip"
                     width={400}
                     height={200}
+                    layout="responsive"
                     style={{
                       margin: "10px",
                     }}

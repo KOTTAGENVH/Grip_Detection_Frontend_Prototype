@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
 import Header from "@/components/header";
 import Webcam from "react-webcam";
@@ -13,6 +14,7 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
+import Image from "next/image";
 
 // Styled Button with Glass Effect
 const GlassButton = styled(Button)(({ theme }) => ({
@@ -30,7 +32,7 @@ const GlassButton = styled(Button)(({ theme }) => ({
 
 const modalstyle = {
   position: "absolute" as "absolute",
-  top: "40%",
+  top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
   width: 400,
@@ -154,6 +156,7 @@ function Camera() {
                 value={session}
                 label="Choose Tutorial"
                 onChange={handleSelectChange}
+                sx={{ marginBottom: "10px" }}
               >
                 <MenuItem value={"legcutter"}>Legcutter-Grip</MenuItem>
                 <MenuItem value={"offcutter"}>Offcutter-Grip</MenuItem>
@@ -162,6 +165,71 @@ function Camera() {
                 </MenuItem>
               </Select>
             </FormControl>
+            <div>
+              {session === "legcutter" ? (
+                <>
+                  <li>
+                    Grip the ball with the index and middle fingers positioned
+                    slightly across the seam towards the leg side.
+                  </li>
+                  <li>
+                    Apply pressure with the thumb on the seam's top to generate
+                    movement away from the batsman.
+                  </li>
+                  <li>
+                    Maintain a loose grip to allow flexibility and variations in
+                    delivery.
+                  </li>
+                  <Image src="/legcutter.jpg" alt="Legcutter Grip"
+                  width={400}
+                  height={200}
+                  />
+                </>
+              ) : session === "offcutter" ? (
+                <>
+                  <li>
+                    Place the index and middle fingers slightly across the seam
+                    towards the off side.
+                  </li>
+                  <li>
+                    Apply pressure with the thumb on the seam's bottom to create
+                    movement into the batsman.
+                  </li>
+                  <li>
+                    Keep a relaxed grip for control and adaptability in
+                    delivery.
+                  </li>
+                  <Image src="/offcutter.jpg" alt="Offcutter Grip"
+                  width={400}
+                  height={200}
+                  />
+                </>
+              ) : session === "fastballing-action-sideon" ? (
+                <>
+                  <li>
+                    Start with a side-on stance, with your non-bowling shoulder
+                    facing the batsman.
+                  </li>
+                  <li>
+                    Generate power by driving off the back foot and transferring
+                    weight onto the front foot during delivery.
+                  </li>
+                  <li>
+                    Maintain a fluid arm action, accelerating the arm towards
+                    the target with a strong follow-through for pace and
+                    accuracy.
+                  </li>
+                  <video
+                    src="/fastballer.MOV"
+                    controls
+                    width="400"
+                    height="200"
+                  ></video>
+                </>
+              ) : (
+                <Typography variant="h6">Select a tutorial</Typography>
+              )}
+            </div>
           </Box>
         </Box>
       </Modal>

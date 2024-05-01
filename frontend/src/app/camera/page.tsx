@@ -35,7 +35,8 @@ const modalstyle = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: 400,
+  width: "90%",
+  maxWidth: 600,
   bgcolor: "background.paper",
   border: "none",
   boxShadow: 24,
@@ -180,9 +181,14 @@ function Camera() {
                     Maintain a loose grip to allow flexibility and variations in
                     delivery.
                   </li>
-                  <Image src="/legcutter.jpg" alt="Legcutter Grip"
-                  width={400}
-                  height={200}
+                  <Image
+                    src="/legcutter.jpg"
+                    alt="Legcutter Grip"
+                    width={400}
+                    height={200}
+                    style={{
+                      margin: "10px",
+                    }}
                   />
                 </>
               ) : session === "offcutter" ? (
@@ -199,9 +205,14 @@ function Camera() {
                     Keep a relaxed grip for control and adaptability in
                     delivery.
                   </li>
-                  <Image src="/offcutter.jpg" alt="Offcutter Grip"
-                  width={400}
-                  height={200}
+                  <Image
+                    src="/offcutter.jpg"
+                    alt="Offcutter Grip"
+                    width={400}
+                    height={200}
+                    style={{
+                      margin: "10px",
+                    }}
                   />
                 </>
               ) : session === "fastballing-action-sideon" ? (
@@ -224,6 +235,9 @@ function Camera() {
                     controls
                     width="400"
                     height="200"
+                    style={{
+                      margin: "10px",
+                    }}
                   ></video>
                 </>
               ) : (

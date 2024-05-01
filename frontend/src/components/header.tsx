@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Stack, Button } from "@mui/material";
+import Link from 'next/link';
 
 interface HeaderProps {
   title: string;
@@ -22,7 +23,9 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
         padding: "0 20px", // Adjust padding as needed
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center" }}>{title}</Box>
+      <Link href="/">
+        <Box sx={{ display: "flex", alignItems: "center" }}>{title}</Box>
+      </Link>
       <Box>
         <Stack spacing={2} direction="row">
           <Button variant="contained">Grip</Button>

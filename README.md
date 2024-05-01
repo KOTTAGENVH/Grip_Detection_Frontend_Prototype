@@ -1,0 +1,1 @@
+# Grip_Detection_Frontend_Prototype

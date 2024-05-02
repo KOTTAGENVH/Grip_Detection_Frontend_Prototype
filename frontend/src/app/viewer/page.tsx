@@ -93,7 +93,7 @@ function Viewer() {
                 position: "absolute",
                 top: position.y,
                 left: position.x,
-                width: "80px",
+                width: "5vw",
                 height: "120px",
                 borderRadius: "10px",
                 zIndex: 1,

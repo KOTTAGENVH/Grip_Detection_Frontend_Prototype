@@ -5,6 +5,7 @@ import { styled } from "@mui/material/styles";
 import Header from "@/components/header";
 import { Box, Button } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
+import Draggable from "react-draggable";
 
 // Styled Button with Glass Effect
 const GlassButton = styled(Button)(({ theme }) => ({
@@ -36,8 +37,14 @@ const GlassBox = styled(Box)(({ theme }) => ({
 function Viewer() {
   const [loading, setLoading] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [offset, setOffset] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
+  const [position, setPosition] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
   const image = useSelector((state: any) => state.image.image);
 
   let title: string = "Viewer";
@@ -80,20 +87,22 @@ function Viewer() {
               userSelect: "none",
             }}
           />
-          <GlassBox
-            sx={{
-              position: "absolute",
-              top: position.y,
-              left: position.x,
-              width: "80px",
-              height: "120px",
-              borderRadius: "10px",
-              zIndex: 1,
-            }}
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
-            onMouseMove={handleMouseMove}
-          />
+          <Draggable>
+            <GlassBox
+              sx={{
+                position: "absolute",
+                top: position.y,
+                left: position.x,
+                width: "80px",
+                height: "120px",
+                borderRadius: "10px",
+                zIndex: 1,
+              }}
+              // onMouseDown={handleMouseDown}
+              // onMouseUp={handleMouseUp}
+              // onMouseMove={handleMouseMove}
+            />
+          </Draggable>
         </div>
       )}
 

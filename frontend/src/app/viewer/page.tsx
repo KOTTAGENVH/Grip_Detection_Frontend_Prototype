@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { styled } from "@mui/material/styles";
 import Header from "@/components/header";
@@ -45,7 +45,15 @@ function Viewer() {
     x: 0,
     y: 0,
   });
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+
   const image = useSelector((state: any) => state.image.image);
+
+  useEffect(() => {
+      if(window.innerWidth <= 1000){
+        setIsMobile(true);
+      }
+  }, []);
 
   let title: string = "Viewer";
 
@@ -87,22 +95,37 @@ function Viewer() {
               userSelect: "none",
             }}
           />
-          <Draggable>
-            <GlassBox
-              sx={{
-                position: "absolute",
-                top: position.y,
-                left: position.x,
-                width: "5vw",
-                height: "120px",
-                borderRadius: "10px",
-                zIndex: 1,
-              }}
-              // onMouseDown={handleMouseDown}
-              // onMouseUp={handleMouseUp}
-              // onMouseMove={handleMouseMove}
-            />
-          </Draggable>
+          {isMobile ? (
+            <Draggable onDrag={(e, ui) => setPosition({ x: ui.x, y: ui.y })}>
+              <GlassBox
+                sx={{
+                  top: position.y,
+                  left: position.x,
+                  width: "20px",
+                  height: "60px",
+                  borderRadius: "10px",
+                  zIndex: 1,
+                }}
+              />
+            </Draggable>
+          ) : (
+            <Draggable>
+              <GlassBox
+                sx={{
+                  position: "absolute",
+                  top: position.y,
+                  left: position.x,
+                  width: "5vw",
+                  height: "120px",
+                  borderRadius: "10px",
+                  zIndex: 1,
+                }}
+                // onMouseDown={handleMouseDown}
+                // onMouseUp={handleMouseUp}
+                // onMouseMove={handleMouseMove}
+              />
+            </Draggable>
+          )}
         </div>
       )}
 

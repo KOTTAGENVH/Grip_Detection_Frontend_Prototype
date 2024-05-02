@@ -42,7 +42,7 @@ function Viewer() {
 
   let title: string = "Viewer";
 
-  const handleMouseDown = (e: any) => {
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     setIsDragging(true);
     setOffset({
       x: e.clientX - position.x,
@@ -54,7 +54,7 @@ function Viewer() {
     setIsDragging(false);
   };
 
-  const handleMouseMove = (e: any) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isDragging) return;
     setPosition({
       x: e.clientX - offset.x,
@@ -77,7 +77,7 @@ function Viewer() {
               display: "block",
               marginLeft: "auto",
               marginRight: "auto",
-              userSelect: "none", 
+              userSelect: "none",
             }}
           />
           <GlassBox

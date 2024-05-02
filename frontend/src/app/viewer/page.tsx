@@ -39,28 +39,20 @@ const GlassBox = styled(Box)(({ theme }) => ({
 
 function Viewer() {
   const [loading, setLoading] = useState<boolean>(true);
-  const [isDragging, setIsDragging] = useState(false);
-  const [offset, setOffset] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
-  });
   const [position, setPosition] = useState<{ x: number; y: number }>({
     x: 0,
     y: 0,
   });
-  const [isMobile, setIsMobile] = useState<boolean>(false);
   const [handLandmarks, setHandLandmarks] = useState<number[][]>([]);
   const [alertShown, setAlertShown] = useState<boolean>(false);
   const [tfReady, setTfReady] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
 
   const imageRef = useRef<HTMLImageElement>(null);
 
   const image = useSelector((state: any) => state.image.image);
 
   useEffect(() => {
-    if (window.innerWidth <= 1000) {
-      setIsMobile(true);
-    }
     async function loadTensorFlow() {
       await handpose.load();
       setTfReady(true);
@@ -73,6 +65,11 @@ function Viewer() {
     detectHands();
   }, [tfReady]);
 
+  useEffect(() => {
+    if (window.innerWidth <= 1000) {
+      setIsMobile(true);
+    }
+  }, []);
   const detectHands = async () => {
     if (tfReady && imageRef.current) {
       const net = await handpose.load();
@@ -89,11 +86,76 @@ function Viewer() {
     }
   };
 
-  let title: string = "Viewer";
+  const getFingerByLandmark = (landmarkIndex: number): string => {
+    if (landmarkIndex === 0) {
+      return "thumb";
+    } else if (landmarkIndex >= 1 && landmarkIndex <= 4) {
+      return "thumb";
+    } else if (landmarkIndex >= 5 && landmarkIndex <= 8) {
+      return "index";
+    } else if (landmarkIndex >= 9 && landmarkIndex <= 12) {
+      return "middle";
+    } else if (landmarkIndex >= 13 && landmarkIndex <= 16) {
+      return "ring";
+    } else if (landmarkIndex >= 17 && landmarkIndex <= 20) {
+      return "pinky";
+    } else {
+      return "unknown";
+    }
+  };
 
+  // const checkIfOnFinger = () => {
+  //   const glassBoxRect = document
+  //     .getElementById("glass-box")
+  //     ?.getBoundingClientRect();
+  //   if (glassBoxRect) {
+  //     handLandmarks.forEach((landmark, index) => {
+  //       if (
+  //         landmark[0] >= glassBoxRect.left &&
+  //         landmark[0] <= glassBoxRect.right &&
+  //         landmark[1] >= glassBoxRect.top &&
+  //         landmark[1] <= glassBoxRect.bottom
+  //       ) {
+  //         console.log(
+  //           `GlassBox is on top of ${getFingerByLandmark(index)} finger!`
+  //         );
+  //       }
+  //     });
+  //   }
+  // };
+
+  const checkIfOnFinger = () => {
+    const glassBoxRect = document.getElementById("glass-box")?.getBoundingClientRect();
+    if (glassBoxRect) {
+      const imageRect = imageRef.current?.getBoundingClientRect();
+      if (imageRect) {
+        const imageOffsetX = imageRect.left;
+        const imageOffsetY = imageRect.top;
+  
+        handLandmarks.forEach((landmark, index) => {
+          // Adjust the landmark coordinates relative to the image
+          const landmarkX = landmark[0] + imageOffsetX;
+          const landmarkY = landmark[1] + imageOffsetY;
+  
+          if (
+            landmarkX >= glassBoxRect.left &&
+            landmarkX <= glassBoxRect.right &&
+            landmarkY >= glassBoxRect.top &&
+            landmarkY <= glassBoxRect.bottom
+          ) {
+            console.log(
+              `GlassBox is on top of ${getFingerByLandmark(index)} finger!`
+            );
+          }
+        });
+      }
+    }
+  };
+
+  
   return (
     <div>
-      <Header title={title} />
+      <Header title="Viewer" />
       {image && (
         <div style={{ position: "relative" }}>
           <Image
@@ -146,9 +208,16 @@ function Viewer() {
             </svg>
           )}
           {isMobile ? (
-            <Draggable onDrag={(e, ui) => setPosition({ x: ui.x, y: ui.y })}>
+            <Draggable
+              onDrag={(e, ui) => {
+                setPosition({ x: ui.x, y: ui.y });
+                checkIfOnFinger();
+              }}
+            >
               <GlassBox
+                id="glass-box"
                 sx={{
+                  position: "absolute",
                   top: position.y,
                   left: position.x,
                   width: "20px",
@@ -159,8 +228,14 @@ function Viewer() {
               />
             </Draggable>
           ) : (
-            <Draggable>
+            <Draggable
+              onDrag={(e, ui) => {
+                setPosition({ x: ui.x, y: ui.y });
+                checkIfOnFinger();
+              }}
+            >
               <GlassBox
+                id="glass-box"
                 sx={{
                   position: "absolute",
                   top: position.y,
@@ -178,14 +253,13 @@ function Viewer() {
 
       <GlassButton
         variant="contained"
-        // onClick={capturePhoto}
         sx={{
           position: "absolute",
           bottom: "10px",
           width: "100%",
         }}
       >
-        {loading ? <CircularProgress /> : "Upload"}{" "}
+        {loading ? <CircularProgress /> : "Upload"}
       </GlassButton>
     </div>
   );

@@ -78,7 +78,7 @@ function Viewer() {
             alt="Camera-image"
             src={image}
             height="70%"
-            width="65%"
+            width="1200vw"
             loading="lazy"
             style={{
               display: "block",

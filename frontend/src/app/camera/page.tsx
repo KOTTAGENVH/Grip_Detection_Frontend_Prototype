@@ -26,7 +26,6 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { setImageUrl } from "../GlobalRedux/Feature/imageSlice";
 import CircularProgress from "@mui/material/CircularProgress";
-import { link } from "fs";
 
 // Styled Button with Glass Effect
 const GlassButton = styled(Button)(({ theme }) => ({
@@ -58,16 +57,18 @@ const modalstyle = {
 };
 
 function Camera() {
+  
   const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const webcamRef = useRef<Webcam>(null);
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState("");
-  const dispatch = useDispatch();
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
+  const dispatch = useDispatch();
+  
   // Function to capture photo
   const capturePhoto = async () => {
     const video = webcamRef.current?.video;
@@ -119,6 +120,7 @@ function Camera() {
             await dispatch(setImageUrl(downloadUrl));
             setLoading(false);
             alert("Image uploaded successfully");
+            window.location.href = '/viewer';
           })
           .catch((error) => {
             // Handle getting download URL error

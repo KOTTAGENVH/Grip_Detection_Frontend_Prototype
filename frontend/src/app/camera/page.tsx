@@ -392,6 +392,17 @@ const Camera = () => {
   return (
     <div>
       <Header title={title} />
+      <div
+      style={{
+        position: "absolute",
+        zIndex: 10,
+        display: "flex",
+        flexDirection: "row",
+        width: "10vw",
+        height: "6vh",
+      
+      }}
+      >
       <select
         aria-label="Select Camera"
         value={selectedCamera || ""}
@@ -402,7 +413,7 @@ const Camera = () => {
           padding: "10px",
           borderRadius: "10px",
           margin: "10px",
-          position: "absolute",
+       
           zIndex: 10,
         }}
       >
@@ -412,6 +423,26 @@ const Camera = () => {
           </option>
         ))}
       </select>
+      <select
+        aria-label="Select Camera"
+        value={selectedCamera || ""}
+        onChange={handleCameraChange}
+        style={{
+          backgroundColor: "white",
+          color: "black",
+          padding: "10px",
+          borderRadius: "10px",
+          margin: "10px",
+          zIndex: 10,
+        }}
+      >
+         {cameras.map((camera) => (
+          <option key={camera.deviceId} value={camera.deviceId}>
+            {camera.label || `Camera ${cameras.indexOf(camera) + 1}`}
+          </option>
+        ))}
+        </select>
+        </div>
       <Webcam
         ref={webcamRef}
         videoConstraints={selectedCamera ? { deviceId: selectedCamera } : {}}

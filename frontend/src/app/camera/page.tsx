@@ -17,14 +17,11 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Image from "next/image";
 import { ToastContainer, toast } from "react-toastify";
 import { storage } from "@/Api/services/firebase";
-import {
-  getDownloadURL,
-  ref,
-  uploadBytesResumable,
-} from "firebase/storage";
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { useDispatch } from "react-redux";
 import CircularProgress from "@mui/material/CircularProgress";
 import Header from "@/components/header";
+import * as handTrack from "handtrackjs";
 
 // Styled Button with Glass Effect
 const GlassButton = styled(Button)(({ theme }) => ({
@@ -33,6 +30,7 @@ const GlassButton = styled(Button)(({ theme }) => ({
     backgroundColor: "rgba(255, 255, 255, 0.1)",
     backdropFilter: "blur(8px)",
     border: "1px solid transparent",
+    color: "black",
     "&:hover": {
       backgroundColor: "rgba(255, 255, 255, 0.8)",
       color: "black",
@@ -72,17 +70,21 @@ const Camera = () => {
   const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [modelLoaded, setModelLoaded] = useState<boolean>(false); 
+  const [modelLoaded, setModelLoaded] = useState<boolean>(false);
   const [position, setPosition] = useState<{ x: number; y: number }>({
     x: 0,
     y: 0,
   });
   const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [predictions, setPredictions] = useState<handpose.AnnotatedPrediction[]>([]);
+  const [predictions, setPredictions] = useState<
+    handpose.AnnotatedPrediction[]
+  >([]);
   const [model, setModel] = useState<handpose.HandPose | null>(null);
   const webcamRef = useRef<Webcam>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [open, setOpen] = useState(false);
+  const [captureenable, setCaptureEnable] = useState(false);
+  const [captureloading, setCaptureLoading] = useState(false);
   const [session, setSession] = useState("");
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -92,7 +94,10 @@ const Camera = () => {
   let title: string = "Camera";
 
   // Function to capture photo
+  // Function to capture photo
   const capturePhoto = async () => {
+    console.log("capturePhoto function called");
+
     const video = webcamRef.current?.video;
     if (!video) return toast.error("No Image found");
 
@@ -116,58 +121,155 @@ const Camera = () => {
     const imageFileName = `captured-image-${timestamp}.jpg`;
     const imageFile = new File([blob], imageFileName, { type: "image/jpeg" });
 
-    // Upload the image file to Firebase Storage
-    const storageRef = ref(storage, "non-resized-image/");
-    const imageRef = ref(storage, `non-resized-image/${imageFile.name}`);
-    const uploadTask = uploadBytesResumable(imageRef, imageFile);
+    // Check if model is null
+    if (!model) {
+      console.log("Handpose model is not loaded.");
+      return;
+    }
 
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        // Handle upload progress
-        const progress =
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-      },
-      (error) => {
-        // Handle upload error
-        setLoading(false);
-        console.error("Upload failed:", error);
-        alert("An error occurred in uploading");
-      },
-      () => {
-        // Upload completed successfully, get the download URL
-        getDownloadURL(imageRef)
-          .then(async (downloadUrl) => {
-            // Do something with the download URL
-            setLoading(false);
-            alert("Image uploaded successfully");
-            window.location.href = "/viewer";
-          })
-          .catch((error) => {
-            // Handle getting download URL error
-            setLoading(false);
-            console.error("Error getting download URL:", error);
-            toast.error("An error occurred while getting download URL");
+    // Check which finger is under the glass box
+    const glassBoxCenterX = position.x + 10; // Adjust according to your glass box size
+    const glassBoxCenterY = position.y + 30; // Adjust according to your glass box size
+    let closestFinger: string | null = null;
+
+    const predictions = await model.estimateHands(video);
+    if (predictions && predictions.length > 0) {
+      predictions.forEach((prediction) => {
+        const landmarks = prediction.landmarks;
+        if (landmarks && landmarks.length > 0) {
+          const distances = landmarks.map((landmark) => {
+            const [x, y] = landmark;
+            return Math.sqrt(
+              (x - glassBoxCenterX) ** 2 + (y - glassBoxCenterY) ** 2
+            );
           });
-      }
-    );
+          const closestIndex = distances.indexOf(Math.min(...distances));
 
-    // Wait for the upload to complete
-    await uploadTask;
+          switch (closestIndex) {
+            case 0:
+              closestFinger = "Thumb";
+              break;
+            case 1:
+              closestFinger = "Thumb";
+            case 2:
+              closestFinger = "Thumb";
+            case 3:
+              closestFinger = "Thumb";
+            case 4:
+              closestFinger = "Thumb";
+              break;
+            case 5:
+              closestFinger = "Index";
+              break;
+            case 6:
+              closestFinger = "Index";
+              break;
+            case 7:
+              closestFinger = "Index";
+              break;
+            case 8:
+              closestFinger = "Index";
+              break;
+            case 9:
+              closestFinger = "Middle";
+              break;
+            case 10:
+              closestFinger = "Middle";
+              break;
+            case 11:
+              closestFinger = "Middle";
+              break;
+            case 12:
+              closestFinger = "Middle";
+              break;
+            case 13:
+              closestFinger = "Ring";
+              break;
+            case 14:
+              closestFinger = "Ring";
+              break;
+            case 15:
+              closestFinger = "Ring";
+              break;
+            case 16:
+              closestFinger = "Ring";
+              break;
+            case 17:
+              closestFinger = "Pinky";
+              break;
+            case 18:
+              closestFinger = "Pinky";
+              break;
+            case 19:
+              closestFinger = "Pinky";
+              break;
+            case 20:
+              closestFinger = "Pinky";
+              break;
+            default:
+              closestFinger = null;
+              break;
+          }
+        }
+      });
+    }
 
-    // Get the URL of the uploaded image
-    const downloadUrl = await getDownloadURL(imageRef);
+    if (!closestFinger) {
+      console.log("Unable to determine closest finger.");
+      return;
+    }
+
+    alert("Glass box is closest to", closestFinger);
+
+    // // Upload the image file to Firebase Storage
+    // const storageRef = ref(storage, "non-resized-image/");
+    // const imageRef = ref(storage, `non-resized-image/${imageFile.name}`);
+    // const uploadTask = uploadBytesResumable(imageRef, imageFile);
+
+    // uploadTask.on(
+    //     "state_changed",
+    //     (snapshot) => {
+    //         // Handle upload progress
+    //         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+    //     },
+    //     (error) => {
+    //         // Handle upload error
+    //         setLoading(false);
+    //         console.error("Upload failed:", error);
+    //         alert("An error occurred in uploading");
+    //     },
+    //     () => {
+    //         // Upload completed successfully, get the download URL
+    //         getDownloadURL(imageRef)
+    //         .then(async (downloadUrl) => {
+    //             // Do something with the download URL
+    //             setLoading(false);
+    //             alert("Image uploaded successfully");
+    //         })
+    //         .catch((error) => {
+    //             // Handle getting download URL error
+    //             setLoading(false);
+    //             console.error("Error getting download URL:", error);
+    //             toast.error("An error occurred while getting download URL");
+    //         });
+    //     }
+    // );
+
+    // // Wait for the upload to complete
+    // await uploadTask;
+
+    // // Get the URL of the uploaded image
+    // const downloadUrl = await getDownloadURL(imageRef);
   };
 
-   // Function to handle camera change
-   const handleCameraChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  // Function to handle camera change
+  const handleCameraChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCamera(event.target.value);
   };
 
   const handleSelectChange = (event: SelectChangeEvent) => {
     setSession(event.target.value as string);
   };
-
 
   useEffect(() => {
     const fetchCamera = async () => {
@@ -190,9 +292,12 @@ const Camera = () => {
   }, []);
 
   useEffect(() => {
+    setCaptureLoading(true);
+    setCaptureEnable(false);
     const loadHandposeModel = async () => {
       const handposeModel = await handpose.load();
       setModel(handposeModel);
+      setCaptureLoading(false);
     };
 
     loadHandposeModel();
@@ -229,9 +334,14 @@ const Camera = () => {
   }, []);
 
   useEffect(() => {
-    if (modelLoaded && model) { // Add a null check for the model
+    if (modelLoaded && model) {
+      // Add a null check for the model
       const detectHands = async () => {
-        if (webcamRef.current && webcamRef.current.video && webcamRef.current.video.readyState === 4) {
+        if (
+          webcamRef.current &&
+          webcamRef.current.video &&
+          webcamRef.current.video.readyState === 4
+        ) {
           const video = webcamRef.current.video as HTMLVideoElement;
           const videoWidth = video.videoWidth;
           const videoHeight = video.videoHeight;
@@ -243,15 +353,15 @@ const Camera = () => {
             if (ctx) {
               ctx.clearRect(0, 0, canvas.width, canvas.height);
               ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
-  
+
               // Detect hands
               const predictions = await model.estimateHands(video);
               if (predictions && predictions.length > 0) {
                 // Draw landmarks for each hand prediction
-                predictions.forEach(prediction => {
+                predictions.forEach((prediction) => {
                   const landmarks = prediction.landmarks;
                   if (landmarks && landmarks.length > 0) {
-                    landmarks.forEach(landmark => {
+                    landmarks.forEach((landmark) => {
                       const [x, y] = landmark;
                       ctx.beginPath();
                       ctx.arc(x, y, 5, 0, 2 * Math.PI);
@@ -266,13 +376,10 @@ const Camera = () => {
         }
         requestAnimationFrame(detectHands);
       };
-  
+
       detectHands();
     }
   }, [modelLoaded, model]);
-  
-  
-  
 
   return (
     <div>
@@ -299,9 +406,7 @@ const Camera = () => {
       </select>
       <Webcam
         ref={webcamRef}
-        videoConstraints={
-          selectedCamera ? { deviceId: selectedCamera } : {}
-        }
+        videoConstraints={selectedCamera ? { deviceId: selectedCamera } : {}}
         style={{
           position: "absolute",
           left: 0,
@@ -363,13 +468,14 @@ const Camera = () => {
         <GlassButton
           variant="contained"
           onClick={capturePhoto}
+          disabled={captureloading || loading}
           sx={{
             position: "absolute",
             bottom: "10px",
             left: "10px",
           }}
         >
-          {loading ? <CircularProgress /> : "Capture"}{" "}
+          {captureloading || loading ? <CircularProgress /> : "Capture"}
         </GlassButton>
         <GlassButton
           variant="contained"

@@ -21,7 +21,7 @@ import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { useDispatch } from "react-redux";
 import CircularProgress from "@mui/material/CircularProgress";
 import Header from "@/components/header";
-import * as handTrack from "handtrackjs";
+
 
 // Styled Button with Glass Effect
 const GlassButton = styled(Button)(({ theme }) => ({

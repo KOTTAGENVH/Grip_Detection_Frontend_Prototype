@@ -24,6 +24,7 @@ import {
 } from "firebase/storage";
 import { useDispatch } from "react-redux";
 import CircularProgress from "@mui/material/CircularProgress";
+import Header from "@/components/header";
 
 // Styled Button with Glass Effect
 const GlassButton = styled(Button)(({ theme }) => ({
@@ -221,7 +222,7 @@ const Camera = () => {
     const loadHandposeModel = async () => {
       const handposeModel = await handpose.load();
       setModelLoaded(true); // Set model loaded state to true
-      alert("Hand detection model loaded successfully!");
+      // alert("Hand detection model loaded successfully!");
     };
 
     loadHandposeModel();
@@ -275,6 +276,7 @@ const Camera = () => {
 
   return (
     <div>
+      <Header title={title} />
       <select
         aria-label="Select Camera"
         value={selectedCamera || ""}

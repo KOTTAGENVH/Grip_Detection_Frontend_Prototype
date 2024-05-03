@@ -219,7 +219,7 @@ const Camera = () => {
       return;
     }
 
-    alert("Glass box is closest to", closestFinger);
+    alert("Glass box is closest to " +  closestFinger);
 
     // // Upload the image file to Firebase Storage
     // const storageRef = ref(storage, "non-resized-image/");

@@ -21,6 +21,7 @@ import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { useDispatch } from "react-redux";
 import CircularProgress from "@mui/material/CircularProgress";
 import Header from "@/components/header";
+import { gripModel } from "@/Api/services/gripmodel";
 
 
 // Styled Button with Glass Effect
@@ -70,6 +71,7 @@ const Camera = () => {
   const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [ballingGrip, setBallingGrip] = useState<string>("");
   const [modelLoaded, setModelLoaded] = useState<boolean>(false);
   const [position, setPosition] = useState<{ x: number; y: number }>({
     x: 0,
@@ -215,51 +217,73 @@ const Camera = () => {
     }
 
     if (!closestFinger) {
-      console.log("Unable to determine closest finger.");
+      alert("Unable to determine closest finger.");
       return;
     }
 
-    alert("Glass box is closest to " +  closestFinger);
+    if (ballingGrip === "legcutter" && closestFinger !== "Middle") {
+      alert("Incorrect grip. Please position the middle finger on the seam.");
+      return; 
+    } else if (ballingGrip === "offcutter" && closestFinger !== "Index") {
+      alert("Incorrect grip. Please position the index finger on the seam.");
+      return;
+    } else if (!closestFinger) {
+      alert("Unable to determine closest finger so pls move the glass box to the seam.");
+      return;
+    }
+    // alert("Glass box is closest to " +  closestFinger);
 
-    // // Upload the image file to Firebase Storage
-    // const storageRef = ref(storage, "non-resized-image/");
-    // const imageRef = ref(storage, `non-resized-image/${imageFile.name}`);
-    // const uploadTask = uploadBytesResumable(imageRef, imageFile);
+    // Upload the image file to Firebase Storage
+    const storageRef = ref(storage, "non-resized-image/");
+    const imageRef = ref(storage, `non-resized-image/${imageFile.name}`);
+    const uploadTask = uploadBytesResumable(imageRef, imageFile);
 
-    // uploadTask.on(
-    //     "state_changed",
-    //     (snapshot) => {
-    //         // Handle upload progress
-    //         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-    //     },
-    //     (error) => {
-    //         // Handle upload error
-    //         setLoading(false);
-    //         console.error("Upload failed:", error);
-    //         alert("An error occurred in uploading");
-    //     },
-    //     () => {
-    //         // Upload completed successfully, get the download URL
-    //         getDownloadURL(imageRef)
-    //         .then(async (downloadUrl) => {
-    //             // Do something with the download URL
-    //             setLoading(false);
-    //             alert("Image uploaded successfully");
-    //         })
-    //         .catch((error) => {
-    //             // Handle getting download URL error
-    //             setLoading(false);
-    //             console.error("Error getting download URL:", error);
-    //             toast.error("An error occurred while getting download URL");
-    //         });
-    //     }
-    // );
+    uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+            // Handle upload progress
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        },
+        (error) => {
+            // Handle upload error
+            setLoading(false);
+            console.error("Upload failed:", error);
+            alert("An error occurred in uploading");
+        },
+        () => {
+            // Upload completed successfully, get the download URL
+            getDownloadURL(imageRef)
+            .then(async (downloadUrl) => {
+                // Do something with the download URL
+                setLoading(false);
+                alert("Image uploaded successfully");
+            })
+            .catch((error) => {
+                // Handle getting download URL error
+                setLoading(false);
+                console.error("Error getting download URL:", error);
+                toast.error("An error occurred while getting download URL");
+            });
+        }
+    );
 
-    // // Wait for the upload to complete
-    // await uploadTask;
+    // Wait for the upload to complete
+    await uploadTask;
 
-    // // Get the URL of the uploaded image
-    // const downloadUrl = await getDownloadURL(imageRef);
+    // Get the URL of the uploaded image
+    const downloadUrl = await getDownloadURL(imageRef);
+
+    // Call the grip model API
+    setLoading(true);
+    gripModel(downloadUrl, ballingGrip).then((response) => {
+      setLoading(false);
+      alert(response.message);
+    } ).catch((error) => {
+      setLoading(false);
+      console.error("Error in grip model API:", error);
+      alert("An error occurred in grip analysis. Please try again.");
+    }
+    );
   };
 
   // Function to handle camera change
@@ -424,9 +448,9 @@ const Camera = () => {
         ))}
       </select>
       <select
-        aria-label="Select Camera"
+        aria-label="Select balling grip"
         value={selectedCamera || ""}
-        onChange={handleCameraChange}
+        onChange= {(e) => setBallingGrip(e.target.value)}
         style={{
           backgroundColor: "white",
           color: "black",
@@ -436,11 +460,8 @@ const Camera = () => {
           zIndex: 10,
         }}
       >
-         {cameras.map((camera) => (
-          <option key={camera.deviceId} value={camera.deviceId}>
-            {camera.label || `Camera ${cameras.indexOf(camera) + 1}`}
-          </option>
-        ))}
+        <option value="legcutter">Legcutter</option>
+        <option value="offcutter">Offcutter</option>
         </select>
         </div>
       <Webcam

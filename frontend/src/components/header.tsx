@@ -1,6 +1,6 @@
 import React from "react";
-import { Box, Stack, Button } from "@mui/material";
-import Link from 'next/link';
+import { Box, Stack, Button, Typography } from "@mui/material";
+import Link from "next/link";
 
 interface HeaderProps {
   title: string;
@@ -27,10 +27,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
         <Box sx={{ display: "flex", alignItems: "center" }}>{title}</Box>
       </Link>
       <Box>
-        <Stack spacing={2} direction="row">
-          <Button variant="contained">Grip</Button>
-          <Button variant="contained">Pose</Button>
-        </Stack>
+        <Typography> @CricBoost 2024</Typography>
       </Box>
     </Box>
   );

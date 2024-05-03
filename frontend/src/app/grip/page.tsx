@@ -20,32 +20,34 @@ const GlassButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-function HomePage() {
+function GripHome() {
+
   let title: string = "Home";
 
+  
   return (
     <div>
-      <Header title={title} />
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "90vh",
-          width: "100vw",
-        }}
-      >
-      <Stack spacing={2} direction="row">
-          <Link href="/grip">
-            <GlassButton variant="contained">Grip Analyser</GlassButton>
-          </Link>
-          <Link href="/pose">
-            <GlassButton variant="contained">Pose Analyser</GlassButton>
-          </Link>
-        </Stack>
-      </div>
+    <Header title={title} />
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "90vh",
+        width: "100vw",
+      }}
+    >
+    <Stack spacing={2} direction="row">
+        <Link href="/camera">
+          <GlassButton variant="contained">Camera</GlassButton>
+        </Link>
+        <Link href="/photo_uploader">
+          <GlassButton variant="contained">Uploader</GlassButton>
+        </Link>
+      </Stack>
     </div>
-  );
+  </div>
+  )
 }
 
-export default HomePage;
+export default GripHome

@@ -1,15 +1,15 @@
-/* eslint-disable react/no-unescaped-entities */
 "use client";
-import Header from "@/components/header";
+/* eslint-disable react/no-unescaped-entities */
+import { useRef, useEffect, useState } from "react";
 import Webcam from "react-webcam";
-import React, { useRef, useEffect, useState } from "react";
-import { Button } from "@mui/material";
+import * as handpose from "@tensorflow-models/handpose";
+import "@tensorflow/tfjs";
+import { Box, Button } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import Link from "next/link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
-import Box from "@mui/material/Box";
+import Draggable from "react-draggable";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
@@ -20,11 +20,9 @@ import { storage } from "@/Api/services/firebase";
 import {
   getDownloadURL,
   ref,
-  uploadBytes,
   uploadBytesResumable,
 } from "firebase/storage";
-import { useDispatch, useSelector } from "react-redux";
-import { setImageUrl } from "../GlobalRedux/Feature/imageSlice";
+import { useDispatch } from "react-redux";
 import CircularProgress from "@mui/material/CircularProgress";
 
 // Styled Button with Glass Effect
@@ -39,6 +37,19 @@ const GlassButton = styled(Button)(({ theme }) => ({
       color: "black",
     },
   },
+}));
+
+const GlassBox = styled(Box)(({ theme }) => ({
+  transition: "background-color 0.3s ease",
+  backgroundColor: "rgba(255, 0, 0, 0.1)",
+  backdropFilter: "blur(8px)",
+  border: "1px solid transparent",
+  transform: "perspective(500px) rotateX(15deg)",
+  "&:hover": {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    color: "black",
+  },
+  cursor: "move",
 }));
 
 const modalstyle = {
@@ -56,19 +67,29 @@ const modalstyle = {
   borderRadius: "20px",
 };
 
-function Camera() {
-  
+const Camera = () => {
   const [selectedCamera, setSelectedCamera] = useState<string | null>(null);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [modelLoaded, setModelLoaded] = useState<boolean>(false); 
+  const [position, setPosition] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [predictions, setPredictions] = useState<handpose.AnnotatedPrediction[]>([]);
+  const [model, setModel] = useState<handpose.HandPose | null>(null);
   const webcamRef = useRef<Webcam>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState("");
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
   const dispatch = useDispatch();
-  
+
+  let title: string = "Camera";
+
   // Function to capture photo
   const capturePhoto = async () => {
     const video = webcamRef.current?.video;
@@ -117,10 +138,9 @@ function Camera() {
         getDownloadURL(imageRef)
           .then(async (downloadUrl) => {
             // Do something with the download URL
-            await dispatch(setImageUrl(downloadUrl));
             setLoading(false);
             alert("Image uploaded successfully");
-            window.location.href = '/viewer';
+            window.location.href = "/viewer";
           })
           .catch((error) => {
             // Handle getting download URL error
@@ -138,7 +158,15 @@ function Camera() {
     const downloadUrl = await getDownloadURL(imageRef);
   };
 
-  let title: string = "Camera";
+   // Function to handle camera change
+   const handleCameraChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCamera(event.target.value);
+  };
+
+  const handleSelectChange = (event: SelectChangeEvent) => {
+    setSession(event.target.value as string);
+  };
+
 
   useEffect(() => {
     const fetchCamera = async () => {
@@ -154,18 +182,99 @@ function Camera() {
     fetchCamera();
   }, []);
 
-  // Function to handle camera change
-  const handleCameraChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCamera(event.target.value);
-  };
+  useEffect(() => {
+    if (window.innerWidth <= 1000) {
+      setIsMobile(true);
+    }
+  }, []);
 
-  const handleSelectChange = (event: SelectChangeEvent) => {
-    setSession(event.target.value as string);
-  };
+  useEffect(() => {
+    const loadHandposeModel = async () => {
+      const handposeModel = await handpose.load();
+      setModel(handposeModel);
+    };
+
+    loadHandposeModel();
+  }, []);
+
+  useEffect(() => {
+    const fetchCamera = async () => {
+      // Fetch available cameras
+      const availableCameras = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = availableCameras.filter(
+        (device) => device.kind === "videoinput"
+      );
+      setCameras(videoDevices);
+      setSelectedCamera(videoDevices[0]?.deviceId || null);
+    };
+
+    fetchCamera();
+  }, []);
+
+  useEffect(() => {
+    if (window.innerWidth <= 1000) {
+      setIsMobile(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const loadHandposeModel = async () => {
+      const handposeModel = await handpose.load();
+      setModelLoaded(true); // Set model loaded state to true
+      alert("Hand detection model loaded successfully!");
+    };
+
+    loadHandposeModel();
+  }, []);
+
+  useEffect(() => {
+    if (modelLoaded && model) { // Add a null check for the model
+      const detectHands = async () => {
+        if (webcamRef.current && webcamRef.current.video && webcamRef.current.video.readyState === 4) {
+          const video = webcamRef.current.video as HTMLVideoElement;
+          const videoWidth = video.videoWidth;
+          const videoHeight = video.videoHeight;
+          const canvas = canvasRef.current;
+          if (canvas) {
+            canvas.width = videoWidth;
+            canvas.height = videoHeight;
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+  
+              // Detect hands
+              const predictions = await model.estimateHands(video);
+              if (predictions && predictions.length > 0) {
+                // Draw landmarks for each hand prediction
+                predictions.forEach(prediction => {
+                  const landmarks = prediction.landmarks;
+                  if (landmarks && landmarks.length > 0) {
+                    landmarks.forEach(landmark => {
+                      const [x, y] = landmark;
+                      ctx.beginPath();
+                      ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                      ctx.fillStyle = "red";
+                      ctx.fill();
+                    });
+                  }
+                });
+              }
+            }
+          }
+        }
+        requestAnimationFrame(detectHands);
+      };
+  
+      detectHands();
+    }
+  }, [modelLoaded, model]);
+  
+  
+  
 
   return (
     <div>
-      <Header title={title} />
       <select
         aria-label="Select Camera"
         value={selectedCamera || ""}
@@ -188,28 +297,78 @@ function Camera() {
       </select>
       <Webcam
         ref={webcamRef}
-        videoConstraints={selectedCamera ? { deviceId: selectedCamera } : {}}
+        videoConstraints={
+          selectedCamera ? { deviceId: selectedCamera } : {}
+        }
         style={{
+          position: "absolute",
           left: 0,
           top: 0,
-          width: "100vw",
-          height: "90vh",
+          width: "140%", // Set width to 100%
+          height: "100%",
         }}
       />
-      <Stack spacing={0} direction="row">
-        <Link href="/camera">
-          <GlassButton
-            variant="contained"
-            onClick={capturePhoto}
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: "100%", // Set width to 100%
+          height: "100%",
+        }}
+      />
+      {isMobile ? (
+        <Draggable
+          onDrag={(e, ui) => {
+            setPosition({ x: ui.x, y: ui.y });
+          }}
+        >
+          <GlassBox
+            id="glass-box"
             sx={{
               position: "absolute",
-              bottom: "10px",
-              left: "10px",
+              top: position.y,
+              left: position.x,
+              width: "20px",
+              height: "60px",
+              borderRadius: "10px",
+              zIndex: 1,
             }}
-          >
-            {loading ? <CircularProgress /> : "Capture"}{" "}
-          </GlassButton>
-        </Link>
+          />
+        </Draggable>
+      ) : (
+        <Draggable
+          onDrag={(e, ui) => {
+            setPosition({ x: ui.x, y: ui.y });
+          }}
+        >
+          <GlassBox
+            id="glass-box"
+            sx={{
+              position: "absolute",
+              top: position.y,
+              left: position.x,
+              width: "5vw",
+              height: "120px",
+              borderRadius: "10px",
+              zIndex: 1,
+            }}
+          />
+        </Draggable>
+      )}
+      <Stack spacing={0} direction="row">
+        <GlassButton
+          variant="contained"
+          onClick={capturePhoto}
+          sx={{
+            position: "absolute",
+            bottom: "10px",
+            left: "10px",
+          }}
+        >
+          {loading ? <CircularProgress /> : "Capture"}{" "}
+        </GlassButton>
         <GlassButton
           variant="contained"
           sx={{
@@ -335,6 +494,6 @@ function Camera() {
       </Modal>
     </div>
   );
-}
+};
 
 export default Camera;

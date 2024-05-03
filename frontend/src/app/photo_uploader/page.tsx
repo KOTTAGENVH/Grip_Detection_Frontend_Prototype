@@ -1,10 +1,13 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 import Header from "@/components/header";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import Link from "next/link";
+import { useDispatch } from "react-redux";
+import { setImageUrl } from "../GlobalRedux/Feature/imageSlice";
+import { ToastContainer, toast } from "react-toastify";
+import Webcam from "react-webcam";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
@@ -14,6 +17,8 @@ import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Image from "next/image";
+import { storage } from "@/Api/services/firebase";
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 
 // Styled Button with Glass Effect
 const GlassButton = styled(Button)(({ theme }) => ({
@@ -47,14 +52,88 @@ const modalstyle = {
 function PhotoUploader() {
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+  const webcamRef = useRef<Webcam>(null);
 
   let title: string = "Uploader";
 
   const handleSelectChange = (event: SelectChangeEvent) => {
     setSession(event.target.value as string);
+  };
+
+  const dispatch = useDispatch();
+
+  // Function to handle file upload
+  const handleFileUpload = async () => {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/jpeg,image/jpg";
+    fileInput.style.display = "none";
+    
+    fileInput.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      if (fileExtension !== 'jpg' && fileExtension !== 'jpeg') {
+        toast.error("Please upload a file in JPEG or JPG format.");
+        return;
+      }
+      uploadPhoto(file);
+    };
+  
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    document.body.removeChild(fileInput);
+  };
+  
+
+  // Function to upload photo
+  const uploadPhoto = async (file: File) => {
+    // Upload the image file to Firebase Storage
+    const storageRef = ref(storage, "non-resized-image/");
+    const imageRef = ref(storage, `non-resized-image/${file.name}`);
+    const uploadTask = uploadBytesResumable(imageRef, file);
+
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        // Handle upload progress
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      },
+      (error) => {
+        // Handle upload error
+        setLoading(false);
+        console.error("Upload failed:", error);
+        toast.error("An error occurred in uploading");
+      },
+      () => {
+        // Upload completed successfully, get the download URL
+        getDownloadURL(imageRef)
+          .then(async (downloadUrl) => {
+            // Do something with the download URL
+            await dispatch(setImageUrl(downloadUrl));
+            setLoading(false);
+            alert("Image uploaded successfully");
+            window.location.href = "/viewer";
+          })
+          .catch((error) => {
+            // Handle getting download URL error
+            setLoading(false);
+            console.error("Error getting download URL:", error);
+            toast.error("An error occurred while getting download URL");
+          });
+      }
+    );
+
+    // Wait for the upload to complete
+    await uploadTask;
+
+    // Get the URL of the uploaded image
+    const downloadUrl = await getDownloadURL(imageRef);
   };
 
   return (
@@ -70,7 +149,9 @@ function PhotoUploader() {
         }}
       >
         <Stack spacing={2} direction="row">
-            <GlassButton variant="contained">Upload</GlassButton>
+        <GlassButton variant="contained" onClick={() => handleFileUpload()}>
+  Upload
+</GlassButton>
           <GlassButton variant="contained" onClick={handleOpen}>
             View Tutorial
           </GlassButton>

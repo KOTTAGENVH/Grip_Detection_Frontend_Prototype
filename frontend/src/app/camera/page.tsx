@@ -23,7 +23,6 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Header from "@/components/header";
 import { gripModel } from "@/Api/services/gripmodel";
 
-
 // Styled Button with Glass Effect
 const GlassButton = styled(Button)(({ theme }) => ({
   "&.MuiButton-contained": {
@@ -221,14 +220,16 @@ const Camera = () => {
       return;
     }
 
-    if (ballingGrip === "legcutter" && closestFinger !== "Middle") {
+    if (ballingGrip === "legcutter" && closestFinger === "Middle") {
       alert("Incorrect grip. Please position the middle finger on the seam.");
-      return; 
-    } else if (ballingGrip === "offcutter" && closestFinger !== "Index") {
+      return;
+    } else if (ballingGrip === "offcutter" && closestFinger === "Index") {
       alert("Incorrect grip. Please position the index finger on the seam.");
       return;
     } else if (!closestFinger) {
-      alert("Unable to determine closest finger so pls move the glass box to the seam.");
+      alert(
+        "Unable to determine closest finger so pls move the glass box to the seam."
+      );
       return;
     }
     // alert("Glass box is closest to " +  closestFinger);
@@ -239,32 +240,33 @@ const Camera = () => {
     const uploadTask = uploadBytesResumable(imageRef, imageFile);
 
     uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-            // Handle upload progress
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        },
-        (error) => {
-            // Handle upload error
+      "state_changed",
+      (snapshot) => {
+        // Handle upload progress
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      },
+      (error) => {
+        // Handle upload error
+        setLoading(false);
+        console.error("Upload failed:", error);
+        alert("An error occurred in uploading");
+      },
+      () => {
+        // Upload completed successfully, get the download URL
+        getDownloadURL(imageRef)
+          .then(async (downloadUrl) => {
+            // Do something with the download URL
             setLoading(false);
-            console.error("Upload failed:", error);
-            alert("An error occurred in uploading");
-        },
-        () => {
-            // Upload completed successfully, get the download URL
-            getDownloadURL(imageRef)
-            .then(async (downloadUrl) => {
-                // Do something with the download URL
-                setLoading(false);
-                alert("Image uploaded successfully");
-            })
-            .catch((error) => {
-                // Handle getting download URL error
-                setLoading(false);
-                console.error("Error getting download URL:", error);
-                toast.error("An error occurred while getting download URL");
-            });
-        }
+            alert("Image uploaded successfully");
+          })
+          .catch((error) => {
+            // Handle getting download URL error
+            setLoading(false);
+            console.error("Error getting download URL:", error);
+            toast.error("An error occurred while getting download URL");
+          });
+      }
     );
 
     // Wait for the upload to complete
@@ -275,15 +277,15 @@ const Camera = () => {
 
     // Call the grip model API
     setLoading(true);
-    gripModel(downloadUrl, ballingGrip).then((response) => {
-      setLoading(false);
-      alert(response.message);
-    } ).catch((error) => {
-      setLoading(false);
-      console.error("Error in grip model API:", error);
-      alert("An error occurred in grip analysis. Please try again.");
-    }
-    );
+   await gripModel(downloadUrl, ballingGrip)
+      .then((response: any) => {
+        setLoading(false);
+      })
+      .catch((error: any) => {
+        setLoading(false);
+        console.error("Error in grip model API:", error);
+        alert("An error occurred in grip analysis. Please try again.");
+      });
   };
 
   // Function to handle camera change
@@ -293,6 +295,10 @@ const Camera = () => {
 
   const handleSelectChange = (event: SelectChangeEvent) => {
     setSession(event.target.value as string);
+  };
+
+  const handleGripChange = (event: SelectChangeEvent) => {
+    setBallingGrip(event.target.value as string);
   };
 
   useEffect(() => {
@@ -407,63 +413,56 @@ const Camera = () => {
 
   useEffect(() => {
     setPosition({
-      x: window.innerWidth / 2 - 10, 
-      y: window.innerHeight / 2 - 30, 
+      x: window.innerWidth / 2 - 10,
+      y: window.innerHeight / 2 - 30,
     });
   }, []);
 
-  
   return (
     <div>
       <Header title={title} />
       <div
-      style={{
-        position: "absolute",
-        zIndex: 10,
-        display: "flex",
-        flexDirection: "row",
-        width: "10vw",
-        height: "6vh",
-      
-      }}
-      >
-      <select
-        aria-label="Select Camera"
-        value={selectedCamera || ""}
-        onChange={handleCameraChange}
         style={{
-          backgroundColor: "white",
-          color: "black",
-          padding: "10px",
-          borderRadius: "10px",
-          margin: "10px",
-       
+          position: "absolute",
           zIndex: 10,
+          display: "flex",
+          flexDirection: "row",
+          width: "10vw",
+          height: "6vh",
         }}
       >
-        {cameras.map((camera) => (
-          <option key={camera.deviceId} value={camera.deviceId}>
-            {camera.label || `Camera ${cameras.indexOf(camera) + 1}`}
-          </option>
-        ))}
-      </select>
-      <select
-        aria-label="Select balling grip"
-        value={selectedCamera || ""}
-        onChange= {(e) => setBallingGrip(e.target.value)}
-        style={{
-          backgroundColor: "white",
-          color: "black",
-          padding: "10px",
-          borderRadius: "10px",
-          margin: "10px",
-          zIndex: 10,
-        }}
-      >
-        <option value="legcutter">Legcutter</option>
-        <option value="offcutter">Offcutter</option>
+        <select
+          aria-label="Select Camera"
+          value={selectedCamera || ""}
+          onChange={handleCameraChange}
+          style={{
+            backgroundColor: "white",
+            color: "black",
+            padding: "10px",
+            borderRadius: "10px",
+            margin: "10px",
+
+            zIndex: 10,
+          }}
+        >
+          {cameras.map((camera) => (
+            <option key={camera.deviceId} value={camera.deviceId}>
+              {camera.label || `Camera ${cameras.indexOf(camera) + 1}`}
+            </option>
+          ))}
         </select>
-        </div>
+        <Select
+          labelId="demo-simple-select-label"
+          id="demo-simple-select"
+          value={ballingGrip}
+          label="Choose Tutorial"
+          onChange={handleGripChange}
+          sx={{ marginBottom: "10px" }}
+        >
+          <MenuItem value={"legcutter"}>Legcutter-Grip</MenuItem>
+          <MenuItem value={"offcutter"}>Offcutter-Grip</MenuItem>
+        </Select>
+      </div>
       <Webcam
         ref={webcamRef}
         videoConstraints={selectedCamera ? { deviceId: selectedCamera } : {}}

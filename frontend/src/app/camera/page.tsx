@@ -72,9 +72,10 @@ const Camera = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [modelLoaded, setModelLoaded] = useState<boolean>(false);
   const [position, setPosition] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
+    x: window.innerWidth / 2 - 10,
+    y: window.innerHeight / 2 - 30, 
   });
+  
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [predictions, setPredictions] = useState<
     handpose.AnnotatedPrediction[]

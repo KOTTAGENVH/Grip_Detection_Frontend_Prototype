@@ -77,9 +77,6 @@ const Camera = () => {
     y: 0,
   });
   const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [predictions, setPredictions] = useState<
-    handpose.AnnotatedPrediction[]
-  >([]);
   const [model, setModel] = useState<handpose.HandPose | null>(null);
   const webcamRef = useRef<Webcam>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -89,7 +86,6 @@ const Camera = () => {
   const [session, setSession] = useState("");
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
-
 
   let title: string = "Camera";
 
@@ -217,8 +213,8 @@ const Camera = () => {
     if (!closestFinger) {
       alert("Unable to determine closest finger.");
       return;
-    } 
-    
+    }
+
     if (ballingGrip === "legcutter" && closestFinger === "Middle") {
       alert("Incorrect grip. Please position the middle finger on the seam.");
       return;
@@ -276,7 +272,7 @@ const Camera = () => {
 
     // Call the grip model API
     setLoading(true);
-   await gripModel(downloadUrl, ballingGrip)
+    await gripModel(downloadUrl, ballingGrip)
       .then((response: any) => {
         setLoading(false);
       })
@@ -410,13 +406,6 @@ const Camera = () => {
     }
   }, [modelLoaded, model]);
 
-  useEffect(() => {
-    setPosition({
-      x: window.innerWidth / 2 - 10,
-      y: window.innerHeight / 2 - 30,
-    });
-  }, []);
-
   return (
     <div>
       <Header title={title} />
@@ -484,43 +473,60 @@ const Camera = () => {
         }}
       />
       {isMobile ? (
-        <Draggable
-          onDrag={(e, ui) => {
-            setPosition({ x: ui.x, y: ui.y });
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
           }}
         >
-          <GlassBox
-            id="glass-box"
-            sx={{
-              position: "absolute",
-              top: position.y,
-              left: position.x,
-              width: "20px",
-              height: "60px",
-              borderRadius: "10px",
-              zIndex: 1,
+          <Draggable
+            onDrag={(e, ui) => {
+              setPosition({ x: ui.x, y: ui.y });
             }}
-          />
-        </Draggable>
+          >
+            <GlassBox
+              id="glass-box"
+              sx={{
+                top: position.y,
+                left: position.x,
+                width: "20px",
+                height: "60px",
+                borderRadius: "10px",
+                zIndex: 1,
+              }}
+            />
+          </Draggable>
+        </div>
       ) : (
-        <Draggable
-          onDrag={(e, ui) => {
-            setPosition({ x: ui.x, y: ui.y });
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
           }}
         >
-          <GlassBox
-            id="glass-box"
-            sx={{
-              position: "absolute",
-              top: position.y,
-              left: position.x,
-              width: "5vw",
-              height: "120px",
-              borderRadius: "10px",
-              zIndex: 1,
+          <Draggable
+            onDrag={(e, ui) => {
+              setPosition({ x: ui.x, y: ui.y });
             }}
-          />
-        </Draggable>
+          >
+            <GlassBox
+              id="glass-box"
+              sx={{
+                // position: "absolute",
+                top: position.y,
+                left: position.x,
+                width: "5vw",
+                height: "120px",
+                borderRadius: "10px",
+                zIndex: 1,
+              }}
+            />
+          </Draggable>
+        </div>
       )}
       <Stack spacing={0} direction="row">
         <GlassButton

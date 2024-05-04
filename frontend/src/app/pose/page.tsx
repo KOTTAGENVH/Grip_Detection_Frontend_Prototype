@@ -232,13 +232,21 @@ function PoseHome() {
           </GlassButton>
           <GlassButton
             variant="contained"
-            onClick={() => handleSeek(videoRef.current?.currentTime - 5)}
+            onClick={() => {
+              if (videoRef.current && typeof videoRef.current.currentTime === 'number') {
+                handleSeek(videoRef.current.currentTime - 2)
+              }
+            }}
           >
             Backward
           </GlassButton>
           <GlassButton
             variant="contained"
-            onClick={() => handleSeek(videoRef.current?.currentTime + 5)}
+            onClick={() => {
+              if (videoRef.current && typeof videoRef.current.currentTime === 'number') {
+                handleSeek(videoRef.current.currentTime + 2)
+              }
+            }}
           >
             Forward
           </GlassButton>

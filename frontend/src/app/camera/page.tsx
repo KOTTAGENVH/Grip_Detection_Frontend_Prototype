@@ -384,18 +384,36 @@ const Camera = () => {
               if (predictions && predictions.length > 0) {
                 // Draw landmarks for each hand prediction
                 predictions.forEach((prediction) => {
-                  const landmarks = prediction.landmarks;
-                  if (landmarks && landmarks.length > 0) {
-                    landmarks.forEach((landmark) => {
-                      const [x, y] = landmark;
-                      ctx.beginPath();
-                      ctx.arc(x, y, 5, 0, 2 * Math.PI);
-                      ctx.fillStyle = "red";
-                      ctx.fill();
-                    });
-                  }
+                    const landmarks = prediction.landmarks;
+                    if (landmarks && landmarks.length > 0) {
+                        landmarks.forEach((landmark, index) => {
+                            const [x, y] = landmark;
+                            ctx.beginPath();
+                            ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                            ctx.fillStyle = "green";
+                            ctx.fill();
+            
+                            // Draw lines between specific landmarks
+                            const connections = [
+                                [0, 2], [2, 3], [3, 4], [0, 5],[0, 17], [5, 9], [9, 13], [13, 17],
+                                [5, 6], [6, 7], [7, 8], [9, 10], [10, 11], [11, 12], 
+                                [13, 14], [14, 15], [15, 16], [17, 18], [18, 19], [19, 20]
+                            ];
+                            ctx.strokeStyle = "blue";
+                            ctx.lineWidth = 1;
+                            connections.forEach(([start, end]) => {
+                                const [startX, startY] = landmarks[start];
+                                const [endX, endY] = landmarks[end];
+                                ctx.beginPath();
+                                ctx.moveTo(startX, startY);
+                                ctx.lineTo(endX, endY);
+                                ctx.stroke();
+                            });
+                        });
+                    }
                 });
-              }
+            }
+            
             }
           }
         }

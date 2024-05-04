@@ -181,7 +181,10 @@ function PoseHome() {
                 ref={videoRef}
                 controls
                 onTimeUpdate={(e) =>
-                  setPlayed(e.target.currentTime / e.target.duration)
+                  setPlayed(
+                    (e.target as HTMLVideoElement).currentTime /
+                    (e.target as HTMLVideoElement).duration
+                  )
                 }
                 style={{
                   width: "80%",

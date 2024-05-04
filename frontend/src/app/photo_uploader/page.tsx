@@ -19,6 +19,7 @@ import Select, { SelectChangeEvent } from "@mui/material/Select";
 import Image from "next/image";
 import { storage } from "@/Api/services/firebase";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import { gripModel } from "@/Api/services/gripmodel";
 
 // Styled Button with Glass Effect
 const GlassButton = styled(Button)(({ theme }) => ({
@@ -53,10 +54,14 @@ function PhotoUploader() {
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState("");
   const [loading, setLoading] = useState<boolean>(false);
-
+  const [ballingGrip, setBallingGrip] = useState<string>("");
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
   const webcamRef = useRef<Webcam>(null);
+
+  const handleGripChange = (event: SelectChangeEvent) => {
+    setBallingGrip(event.target.value as string);
+  };
 
   let title: string = "Uploader";
 
@@ -72,23 +77,22 @@ function PhotoUploader() {
     fileInput.type = "file";
     fileInput.accept = "image/jpeg,image/jpg";
     fileInput.style.display = "none";
-    
+
     fileInput.onchange = (event) => {
       const file = (event.target as HTMLInputElement).files?.[0];
       if (!file) return;
-      const fileExtension = file.name.split('.').pop()?.toLowerCase();
-      if (fileExtension !== 'jpg' && fileExtension !== 'jpeg') {
+      const fileExtension = file.name.split(".").pop()?.toLowerCase();
+      if (fileExtension !== "jpg" && fileExtension !== "jpeg") {
         toast.error("Please upload a file in JPEG or JPG format.");
         return;
       }
       uploadPhoto(file);
     };
-  
+
     document.body.appendChild(fileInput);
     fileInput.click();
     document.body.removeChild(fileInput);
   };
-  
 
   // Function to upload photo
   const uploadPhoto = async (file: File) => {
@@ -110,7 +114,7 @@ function PhotoUploader() {
         console.error("Upload failed:", error);
         toast.error("An error occurred in uploading");
       },
-      () => {
+      async () => {
         // Upload completed successfully, get the download URL
         getDownloadURL(imageRef)
           .then(async (downloadUrl) => {
@@ -118,13 +122,26 @@ function PhotoUploader() {
             await dispatch(setImageUrl(downloadUrl));
             setLoading(false);
             alert("Image uploaded successfully");
-            window.location.href = "/viewer";
           })
           .catch((error) => {
             // Handle getting download URL error
             setLoading(false);
             console.error("Error getting download URL:", error);
             toast.error("An error occurred while getting download URL");
+          });
+        // Get the URL of the uploaded image
+        const downloadUrl = await getDownloadURL(imageRef);
+
+        // Call the grip model API
+        setLoading(true);
+        await gripModel(downloadUrl, ballingGrip)
+          .then((response: any) => {
+            setLoading(false);
+          })
+          .catch((error: any) => {
+            setLoading(false);
+            console.error("Error in grip model API:", error);
+            alert("An error occurred in grip analysis. Please try again.");
           });
       }
     );
@@ -148,10 +165,28 @@ function PhotoUploader() {
           width: "100vw",
         }}
       >
+        <Select
+          labelId="demo-simple-select-label"
+          id="demo-simple-select"
+          value={ballingGrip}
+          label="Choose Tutorial"
+          onChange={handleGripChange}
+          sx={{ 
+            margin: "10px",
+            backgroundColor: "white",
+            borderRadius: "10px",
+            padding: "5px",
+            width: "200px",
+            height: "40px",
+          }}
+        >
+          <MenuItem value={"legcutter"}>Legcutter-Grip</MenuItem>
+          <MenuItem value={"offcutter"}>Offcutter-Grip</MenuItem>
+        </Select>
         <Stack spacing={2} direction="row">
-        <GlassButton variant="contained" onClick={() => handleFileUpload()}>
-  Upload
-</GlassButton>
+          <GlassButton variant="contained" onClick={() => handleFileUpload()}>
+            Upload
+          </GlassButton>
           <GlassButton variant="contained" onClick={handleOpen}>
             View Tutorial
           </GlassButton>

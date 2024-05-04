@@ -90,7 +90,6 @@ const Camera = () => {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  const dispatch = useDispatch();
 
   let title: string = "Camera";
 
@@ -218,8 +217,8 @@ const Camera = () => {
     if (!closestFinger) {
       alert("Unable to determine closest finger.");
       return;
-    }
-
+    } 
+    
     if (ballingGrip === "legcutter" && closestFinger === "Middle") {
       alert("Incorrect grip. Please position the middle finger on the seam.");
       return;

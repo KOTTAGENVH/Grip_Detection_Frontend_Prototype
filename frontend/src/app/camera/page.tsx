@@ -214,11 +214,13 @@ const Camera = () => {
       alert("Unable to determine closest finger.");
       return;
     }
+console.log("closestFinger",closestFinger)
+console.log("ballingGrip",ballingGrip)
 
-    if (ballingGrip === "legcutter" && closestFinger === "Middle") {
+    if (ballingGrip === "legcutter" && closestFinger !== "Middle") {
       alert("Incorrect grip. Please position the middle finger on the seam.");
       return;
-    } else if (ballingGrip === "offcutter" && closestFinger === "Index") {
+    } else if (ballingGrip === "offcutter" && closestFinger !== "Index") {
       alert("Incorrect grip. Please position the index finger on the seam.");
       return;
     } else if (!closestFinger) {
@@ -227,7 +229,6 @@ const Camera = () => {
       );
       return;
     }
-    // alert("Glass box is closest to " +  closestFinger);
 
     // Upload the image file to Firebase Storage
     const storageRef = ref(storage, "non-resized-image/");

@@ -9,6 +9,7 @@ import { storage } from "@/Api/services/firebase";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { useDispatch, useSelector } from "react-redux";
 import { setImageUrl } from "../GlobalRedux/Feature/imageSlice";
+import CustomButton from "@/components/button";
 
 // Styled Button with Glass Effect
 const GlassButton = styled(Button)(({ theme }) => ({
@@ -24,7 +25,7 @@ const GlassButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-function PoseHome() {
+const PoseHome: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [playbackRate, setPlaybackRate] = useState<number>(1.5);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -33,12 +34,13 @@ function PoseHome() {
   const videoURL = useSelector((state: any) => state.image.image);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  let title: string = "Pose Analysis";
+  const title: string = "Pose Analysis";
   const dispatch = useDispatch();
 
   useEffect(() => {
     if (videoRef.current) {
       const videoDuration = videoRef.current.duration;
+      console.log("video duration", videoDuration)
       const maxSlowDown = Math.floor(videoDuration / 20); // Assuming 20 seconds as the minimum duration for slowed down playback
       setMaxSlowDown(maxSlowDown > 0 ? maxSlowDown : 1);
     }
@@ -48,7 +50,7 @@ function PoseHome() {
     setLoading(true);
     const fileInput = document.createElement("input");
     fileInput.type = "file";
-    fileInput.accept = "video/MOV,video/mp4,video/mov";
+    fileInput.accept = "video/MOV,video/mp4,video/mov, video/mkv";
     fileInput.style.display = "none";
 
     fileInput.onchange = async (event) => {
@@ -71,7 +73,7 @@ function PoseHome() {
       video.onloadedmetadata = async () => {
         window.URL.revokeObjectURL(video.src);
         if (video.duration > 20) {
-          toast.error("The video duration must be 20 seconds or less.");
+          alert("The video duration must be 20 seconds or less.");
           setLoading(false);
           return;
         } else {
@@ -88,7 +90,6 @@ function PoseHome() {
   };
 
   const uploadPhoto = async (file: File) => {
-    // Upload the image file to Firebase Storage
     const storageRef = ref(storage, "non-resized-image/");
     const imageRef = ref(storage, `non-resized-image/${file.name}`);
     const uploadTask = uploadBytesResumable(imageRef, file);
@@ -107,20 +108,16 @@ function PoseHome() {
         toast.error("An error occurred in uploading");
       },
       async () => {
-        // Upload completed successfully, get the download URL
         getDownloadURL(imageRef)
           .then(async (downloadUrl) => {
-            // Do something with the download URL
             await dispatch(setImageUrl(downloadUrl));
             setLoading(false);
             alert("Video uploaded successfully");
-            // Refresh the video component
             if (videoRef.current) {
               videoRef.current.load();
             }
           })
           .catch((error) => {
-            // Handle getting download URL error
             setLoading(false);
             console.error("Error getting download URL:", error);
             toast.error("An error occurred while getting download URL");
@@ -128,7 +125,6 @@ function PoseHome() {
       }
     );
 
-    // Wait for the upload to complete
     await uploadTask;
   };
 
@@ -159,60 +155,82 @@ function PoseHome() {
     }
   };
 
+
   return (
-      <div>
-        <ToastContainer />
-        <Header title={title} />
-        <div
-          style={{
-            // display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "90vh",
-            alignContent: "center",
-            alignSelf: "center",
-            textAlign: "center",
-            marginLeft: "20%",
-          }}
-        >
-          {videoURL && (
-            <div>
-              <video
-                ref={videoRef}
-                controls
-                onTimeUpdate={(e) =>
-                  setPlayed(
-                    (e.target as HTMLVideoElement).currentTime /
-                    (e.target as HTMLVideoElement).duration
-                  )
-                }
-                style={{
-                  width: "80%",
-                  height: "60%",
-                  objectFit: "contain",
-                  borderRadius: "10px",
-                  boxShadow: "0 0 10px rgba(0, 0, 0, 0.2)",
-                }}
-              >
-                <source src={videoURL} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-              <div style={{ marginTop: "10px", marginBottom: "10px" }}>
-                Current Slow Down Rate: {playbackRate}x
-              </div>
-            </div>
-          )}
-        <Stack spacing={2} direction="row"
+    <div>
+      <ToastContainer />
+      <Header title={title} />
+      <div
         style={{
-          justifyContent: "center",
           alignItems: "center",
+          justifyContent: "center",
+          height: "90vh",
           alignContent: "center",
           alignSelf: "center",
           textAlign: "center",
-          marginRight: "20%",
+          marginLeft: "20%",
         }}
+      >
+        {videoURL && (
+          <div>
+            <video
+              ref={videoRef}
+              controls
+              onTimeUpdate={(e) =>
+                setPlayed(
+                  (e.target as HTMLVideoElement).currentTime /
+                  (e.target as HTMLVideoElement).duration
+                )
+              }
+              style={{
+                width: "80%",
+                height: "60%",
+                objectFit: "contain",
+                borderRadius: "10px",
+                boxShadow: "0 0 10px rgba(0, 0, 0, 0.2)",
+              }}
+            >
+              <source src={videoURL} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            <div style={{ marginTop: "10px", marginBottom: "10px" }}>
+              Current Slow Down Rate: {playbackRate}x
+            </div>
+          </div>
+        )}
+        <div className="box-border h-16 md:w-10/12 p-4 border-4 rounded-xl flex justify-between items-center">
+          <button className="hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-2">
+            {'<'}
+          </button>
+          {/* {Array.from({ length: 14 }).map((_, index) => (
+            <CustomButton 
+            key={index} 
+            // index={index} 
+            // handleClick={this.handleButtonClick} 
+          />
+        ))} */}
+          <button className="hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-2">
+            {'>'}
+          </button>
+        </div>
+
+        <Stack
+          spacing={2}
+          direction="row"
+          style={{
+            justifyContent: "center",
+            alignItems: "center",
+            alignContent: "center",
+            alignSelf: "center",
+            textAlign: "center",
+            marginRight: "20%",
+          }}
         >
-          <GlassButton variant="contained" onClick={() => handleFileUpload()} disabled={loading}>
+          <GlassButton
+            variant="contained"
+            onClick={() => handleFileUpload()}
+            disabled={loading}
+          >
             {loading ? "Uploading..." : "Upload"}
           </GlassButton>
           <GlassButton variant="contained" onClick={() => handlePlayPause()}>
@@ -234,7 +252,7 @@ function PoseHome() {
             variant="contained"
             onClick={() => {
               if (videoRef.current && typeof videoRef.current.currentTime === 'number') {
-                handleSeek(videoRef.current.currentTime - 2)
+                handleSeek(videoRef.current.currentTime - 2);
               }
             }}
           >
@@ -244,7 +262,7 @@ function PoseHome() {
             variant="contained"
             onClick={() => {
               if (videoRef.current && typeof videoRef.current.currentTime === 'number') {
-                handleSeek(videoRef.current.currentTime + 2)
+                handleSeek(videoRef.current.currentTime + 2);
               }
             }}
           >
@@ -257,4 +275,3 @@ function PoseHome() {
 }
 
 export default PoseHome;
-

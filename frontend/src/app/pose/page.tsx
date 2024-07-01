@@ -9,7 +9,7 @@ import { storage } from "@/Api/services/firebase";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { useDispatch, useSelector } from "react-redux";
 import { setImageUrl } from "../GlobalRedux/Feature/imageSlice";
-import CustomButton from "@/components/button";
+import Slider from "@mui/material/Slider";
 
 // Styled Button with Glass Effect
 const GlassButton = styled(Button)(({ theme }) => ({
@@ -31,6 +31,9 @@ const PoseHome: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [played, setPlayed] = useState<number>(0);
   const [maxSlowDown, setMaxSlowDown] = useState<number>(1);
+  const [sliderValue, setSliderValue] = useState<number>(0);
+  const [sliderMin, setSliderMin] = useState<number>(0);
+  const [sliderMax, setSliderMax] = useState<number>(100);
   const videoURL = useSelector((state: any) => state.image.image);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -40,9 +43,11 @@ const PoseHome: React.FC = () => {
   useEffect(() => {
     if (videoRef.current) {
       const videoDuration = videoRef.current.duration;
-      console.log("video duration", videoDuration)
+      console.log("video duration", videoDuration);
+      console.log("video duration", videoDuration / 14);
       const maxSlowDown = Math.floor(videoDuration / 20); // Assuming 20 seconds as the minimum duration for slowed down playback
       setMaxSlowDown(maxSlowDown > 0 ? maxSlowDown : 1);
+        setSliderMax(Math.floor(videoDuration)); // Set slider max to video duration
     }
   }, [videoURL]);
 
@@ -155,7 +160,14 @@ const PoseHome: React.FC = () => {
     }
   };
 
-
+  const handleSliderChange = (event: any, newValue: number | number[]) => {
+    if (videoRef.current && typeof newValue === "number" && isFinite(newValue)) {
+      videoRef.current.currentTime = newValue;
+      setSliderValue(newValue);
+    }
+  };
+  
+  
   return (
     <div>
       <ToastContainer />
@@ -179,7 +191,7 @@ const PoseHome: React.FC = () => {
               onTimeUpdate={(e) =>
                 setPlayed(
                   (e.target as HTMLVideoElement).currentTime /
-                  (e.target as HTMLVideoElement).duration
+                    (e.target as HTMLVideoElement).duration
                 )
               }
               style={{
@@ -200,17 +212,18 @@ const PoseHome: React.FC = () => {
         )}
         <div className="box-border h-16 md:w-10/12 p-4 border-4 rounded-xl flex justify-between items-center">
           <button className="hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-2">
-            {'<'}
+            {"<"}
           </button>
-          {/* {Array.from({ length: 14 }).map((_, index) => (
-            <CustomButton 
-            key={index} 
-            // index={index} 
-            // handleClick={this.handleButtonClick} 
+          <Slider
+            value={sliderValue}
+            onChange={handleSliderChange}
+            aria-labelledby="continuous-slider"
+            valueLabelDisplay="auto"
+            min={sliderMin}
+            max={sliderMax}
           />
-        ))} */}
           <button className="hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-2">
-            {'>'}
+            {">"}
           </button>
         </div>
 
@@ -251,7 +264,10 @@ const PoseHome: React.FC = () => {
           <GlassButton
             variant="contained"
             onClick={() => {
-              if (videoRef.current && typeof videoRef.current.currentTime === 'number') {
+              if (
+                videoRef.current &&
+                typeof videoRef.current.currentTime === "number"
+              ) {
                 handleSeek(videoRef.current.currentTime - 2);
               }
             }}
@@ -261,7 +277,10 @@ const PoseHome: React.FC = () => {
           <GlassButton
             variant="contained"
             onClick={() => {
-              if (videoRef.current && typeof videoRef.current.currentTime === 'number') {
+              if (
+                videoRef.current &&
+                typeof videoRef.current.currentTime === "number"
+              ) {
                 handleSeek(videoRef.current.currentTime + 2);
               }
             }}
@@ -272,6 +291,6 @@ const PoseHome: React.FC = () => {
       </div>
     </div>
   );
-}
+};
 
 export default PoseHome;

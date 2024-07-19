@@ -6,12 +6,12 @@ import  {getStorage} from "firebase/storage"
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDkfVNWuDoiIt6y8u02KcaWuM_8iEkRnQ4",
-    authDomain: "cricboost-balling-grip.firebaseapp.com",
-    projectId: "cricboost-balling-grip",
-    storageBucket: "cricboost-balling-grip.appspot.com",
-    messagingSenderId: "965515139589",
-    appId: "1:965515139589:web:727eeac3c1057df1b49a6c"
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+    storageBucket: "",
+    messagingSenderId: "",
+    appId: ""
 };
 
 // Initialize Firebase
